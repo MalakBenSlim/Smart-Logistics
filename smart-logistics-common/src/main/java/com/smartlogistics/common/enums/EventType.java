@@ -1,0 +1,14 @@
+package com.smartlogistics.common.enums;
+
+public enum EventType {
+    ORDER_CREATED,
+    WAREHOUSE_SELECTED,
+    ORDER_PREPARED,
+    DRIVER_ASSIGNED,
+    ORDER_SHIPPED,
+    DELIVERY_STARTED,
+    POSITION_UPDATED,
+    DELIVERY_COMPLETED,
+    ORDER_CANCELLED,
+    LOW_STOCK
+}

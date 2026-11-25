@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Smart Logistics</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-brand-panel">
+    <div>
+      <div class="auth-brand-logo">
+        <span>🚚</span>
+        <div>
+          <div>Smart Logistics</div>
+          <div style="font-size:.82rem;opacity:.8;font-weight:400;">Intelligent Delivery Platform</div>
+        </div>
+      </div>
+      <h1 style="margin-top:2.5rem;font-size:2rem;line-height:1.25;">Plateforme distribuée de gestion logistique intelligente</h1>
+      <p style="margin-top:1rem;opacity:.88;max-width:440px;">
+        Orchestration temps réel multi-dépôts, sélection algorithmique du meilleur entrepôt et suivi GPS des livreurs.
+      </p>
+      <div class="auth-feature-list">
+        <div class="auth-feature-item">🔌 <strong>Java RMI + JNDI</strong> — Découverte dynamique et appels de services métier distants</div>
+        <div class="auth-feature-item">📨 <strong>Apache ActiveMQ JMS</strong> — Bus événementiel asynchrone (commandes & alertes stock)</div>
+        <div class="auth-feature-item">📍 <strong>Sockets TCP Multithread</strong> — Télémétrie livreurs et suivi client en temps réel (SSE)</div>
+        <div class="auth-feature-item">🤖 <strong>Smart Route & Warehouse Optimizer</strong> — Sélection multicritère explicable</div>
+      </div>
+    </div>
+    <div style="font-size:.82rem;opacity:.75;">Projet Académique Systèmes Répartis · Java 17 / Maven / H2 TCP / Javalin</div>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h2 style="font-size:1.45rem;margin-bottom:.3rem;">Connexion à votre espace</h2>
+      <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:1.35rem;">Accédez au tableau de bord correspondant à votre rôle.</p>
+
+      <div id="login-alert"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="email">Adresse email</label>
+          <input class="form-control" id="email" type="email" required placeholder="exemple@smartlogistics.tn">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Mot de passe</label>
+          <input class="form-control" id="password" type="password" required placeholder="••••••••">
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;font-size:.85rem;">
+          <a href="/forgot-password">Mot de passe oublié ?</a>
+          <a href="/register">Créer un compte client</a>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:.72rem;" type="submit" id="submit-btn">Se connecter</button>
+      </form>
+
+      <div style="margin-top:1.5rem;padding-top:1.1rem;border-top:1px solid var(--border);">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:.6rem;">
+          Comptes de démonstration rapide
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('client@smartlogistics.tn','Client123!')">👤 Client (Tunis)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('stock@smartlogistics.tn','Stock123!')">🏭 Gestionnaire Stock</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('ahmed.driver@smartlogistics.tn','Driver123!')">🚚 Livreur (Ahmed)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('admin@smartlogistics.tn','Admin123!')">🛡️ Administrateur</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+  function fillDemo(email, pass) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = pass;
+  }
+
+  const routesByRole = {
+    CLIENT: '/client/dashboard',
+    GESTIONNAIRE_STOCK: '/stock/dashboard',
+    LIVREUR: '/driver/dashboard',
+    ADMINISTRATEUR: '/admin/dashboard'
+  };
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('login-alert');
+    const btn = document.getElementById('submit-btn');
+    alertBox.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Authentification RMI...';
+    try {
+      const res = await SL.apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value
+        })
+      });
+      window.location.href = routesByRole[res.user.role] || '/';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${SL.escapeHtml(err.message)}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Se connecter';
+    }
+  });
+</script>
+</body>
+</html>

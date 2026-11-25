@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="1. Central Infrastructure (H2 + RMI + JMS)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.smartlogistics.server.bootstrap.CentralInfrastructureLauncher" />
+    <module name="smart-logistics-server" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

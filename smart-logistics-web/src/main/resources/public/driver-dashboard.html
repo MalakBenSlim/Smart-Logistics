@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Livreur — Smart Logistics</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🛵</span>
+      <div>
+        <div>Smart Logistics</div>
+        <div class="sidebar-subtitle">Terminal Livreur TCP</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="deliveries">📦 Mes Livraisons</button>
+      <button class="nav-item" data-tab="telemetry">📡 Télémétrie Socket TCP</button>
+    </nav>
+    <div class="sidebar-footer"><div class="realtime-pill" id="sse-status">Connexion SSE...</div></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="btn btn-outline btn-sm" id="menu-toggle">☰</button>
+        <strong>Espace Livreur — Suivi Socket TCP</strong>
+      </div>
+      <div class="topbar-right">
+        <select class="form-control" id="drv-status-sel" style="width:165px;" onchange="DriverApp.changeStatus(this.value)">
+          <option value="DISPONIBLE">DISPONIBLE</option>
+          <option value="EN_LIVRAISON">EN_LIVRAISON</option>
+          <option value="HORS_SERVICE">HORS_SERVICE</option>
+        </select>
+        <div class="notif-wrapper">
+          <button class="btn btn-outline btn-sm" id="notif-bell">🔔 <span id="notif-count" class="badge badge-red" style="display:none;">0</span></button>
+          <div class="notif-dropdown" id="notif-dropdown"><div id="notif-list"></div></div>
+        </div>
+        <div style="text-align:right;font-size:.82rem;">
+          <div id="user-name" style="font-weight:700;">—</div>
+          <div id="user-role" style="color:var(--text-muted);">LIVREUR</div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="logout-btn">Déconnexion</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Véhicule</div><div class="kpi-value" id="kpi-veh" style="font-size:1.25rem;">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Statut actuel</div><div class="kpi-value" id="kpi-stat" style="font-size:1.25rem;">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">En cours</div><div class="kpi-value" id="kpi-act">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Livrées au total</div><div class="kpi-value" id="kpi-tot" style="color:var(--success);">0</div></div>
+      </div>
+
+      <section class="section-view active" id="tab-deliveries">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Livraisons affectées</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Commande</th><th>Adresse destination</th><th>Distance</th><th>Statut</th><th>Actions TCP</th></tr></thead>
+              <tbody id="drv-del-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-view" id="tab-telemetry">
+        <div class="grid-2">
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Console Socket TCP (Port 9095)</h3>
+            <div class="form-group">
+              <label class="form-label">Livraison active</label>
+              <select class="form-control" id="tel-del-select" onchange="DriverApp.selectTelemetryDelivery()"></select>
+            </div>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Latitude GPS</label><input class="form-control" id="tel-lat" type="number" step="0.0001"></div>
+              <div class="form-group"><label class="form-label">Longitude GPS</label><input class="form-control" id="tel-lng" type="number" step="0.0001"></div>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <button class="btn btn-outline" type="button" onclick="DriverApp.sendPosition()">📍 Envoyer position TCP</button>
+              <button class="btn btn-primary" type="button" onclick="DriverApp.simulateTcpRoute()">🚀 Simuler trajet GPS (Socket TCP)</button>
+            </div>
+            <div id="tcp-log-box" style="margin-top:1rem;font-family:monospace;font-size:.8rem;background:#0f172a;color:#34d399;padding:.85rem;border-radius:8px;min-height:90px;">
+              Prêt pour transmission Socket TCP vers DeliveryTcpServer...
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Carte de progression</h3>
+            <div class="map-box" id="driver-map"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/driver.js"></script>
+</body>
+</html>

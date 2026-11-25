@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration & Supervision — Smart Logistics</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🛡️</span>
+      <div>
+        <div>Smart Logistics</div>
+        <div class="sidebar-subtitle">Administration</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="overview">📊 Statistiques & Graphiques</button>
+      <button class="nav-item" data-tab="health">🔌 Supervision Services</button>
+      <button class="nav-item" data-tab="orders">📦 Toutes les Commandes</button>
+      <button class="nav-item" data-tab="warehouses">🏭 Dépôts</button>
+      <button class="nav-item" data-tab="drivers">🚚 Livreurs</button>
+      <button class="nav-item" data-tab="users">👥 Utilisateurs & Rôles</button>
+    </nav>
+    <div class="sidebar-footer"><div class="realtime-pill" id="sse-status">Connexion SSE...</div></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="btn btn-outline btn-sm" id="menu-toggle">☰</button>
+        <strong>Console Administrateur — Plateforme Distribuée</strong>
+      </div>
+      <div class="topbar-right">
+        <a href="/stock/dashboard" class="btn btn-outline btn-sm">Vue Stock</a>
+        <div class="notif-wrapper">
+          <button class="btn btn-outline btn-sm" id="notif-bell">🔔 <span id="notif-count" class="badge badge-red" style="display:none;">0</span></button>
+          <div class="notif-dropdown" id="notif-dropdown"><div id="notif-list"></div></div>
+        </div>
+        <div style="text-align:right;font-size:.82rem;">
+          <div id="user-name" style="font-weight:700;">—</div>
+          <div id="user-role" style="color:var(--text-muted);">ADMINISTRATEUR</div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="logout-btn">Déconnexion</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- OVERVIEW + CHARTS -->
+      <section class="section-view active" id="tab-overview">
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Utilisateurs</div><div class="kpi-value" id="k-users">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Commandes totales</div><div class="kpi-value" id="k-orders">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">En cours</div><div class="kpi-value" id="k-active" style="color:var(--primary);">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Livrées</div><div class="kpi-value" id="k-deliv" style="color:var(--success);">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Chiffre d'affaires</div><div class="kpi-value" id="k-rev" style="font-size:1.35rem;">0 DT</div></div>
+          <div class="kpi-card"><div class="kpi-label">Livreurs dispo</div><div class="kpi-value" id="k-drv">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Dépôts actifs</div><div class="kpi-value" id="k-wh">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Ruptures / Critiques</div><div class="kpi-value" id="k-out" style="color:var(--danger);">0</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card"><h3 class="card-title" style="margin-bottom:.75rem;">Commandes par jour</h3><div id="chart-orders"></div></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:.75rem;">Livraisons par jour</h3><div id="chart-deliveries"></div></div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3 class="card-title" style="margin-bottom:.75rem;">Produits les plus commandés</h3><div id="chart-top-prod"></div></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:.75rem;">Charge des dépôts (%)</h3><div id="chart-wh-load"></div></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:.75rem;">Performance des livreurs</h3><div id="chart-drv-perf"></div></div>
+        </div>
+      </section>
+
+      <!-- SERVICE HEALTH SUPERVISION -->
+      <section class="section-view" id="tab-health">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Supervision des nœuds distribués (JNDI / RMI / JMS / TCP / H2)</h3>
+              <small style="color:var(--text-muted);" id="health-checked-at"></small>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="AdminApp.loadHealth()">↻ Actualiser l'état</button>
+          </div>
+          <div class="kpi-grid" id="health-cards"></div>
+        </div>
+      </section>
+
+      <!-- ALL ORDERS -->
+      <section class="section-view" id="tab-orders">
+        <div class="card">
+          <h3 class="card-title" style="margin-bottom:1rem;">Supervision globale des commandes</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Client</th><th>Dépôt</th><th>Total</th><th>Statut</th><th>Smart Decision</th></tr></thead>
+              <tbody id="admin-orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- WAREHOUSES -->
+      <section class="section-view" id="tab-warehouses">
+        <div class="grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start;">
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Dépôts enregistrés</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nom</th><th>Adresse</th><th>GPS</th><th>Charge</th><th>Statut</th></tr></thead>
+                <tbody id="admin-wh-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Ajouter un dépôt</h3>
+            <form id="wh-form">
+              <div class="form-group"><label class="form-label">Nom</label><input class="form-control" id="w-name" required placeholder="Dépôt Bizerte"></div>
+              <div class="form-group"><label class="form-label">Adresse</label><input class="form-control" id="w-addr" required></div>
+              <div class="grid-2">
+                <div class="form-group"><label class="form-label">Lat</label><input class="form-control" id="w-lat" type="number" step="0.0001" value="37.2744" required></div>
+                <div class="form-group"><label class="form-label">Lng</label><input class="form-control" id="w-lng" type="number" step="0.0001" value="9.8739" required></div>
+              </div>
+              <div class="form-group"><label class="form-label">Capacité maximale</label><input class="form-control" id="w-cap" type="number" value="400" required></div>
+              <button class="btn btn-primary" style="width:100%;" type="submit">+ Enregistrer</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- DRIVERS -->
+      <section class="section-view" id="tab-drivers">
+        <div class="grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start;">
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Flotte des livreurs</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nom</th><th>Téléphone</th><th>Véhicule</th><th>Courses actives</th><th>Total livrées</th><th>Statut</th></tr></thead>
+                <tbody id="admin-drv-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Ajouter un livreur</h3>
+            <form id="drv-form">
+              <div class="form-group"><label class="form-label">Nom complet</label><input class="form-control" id="d-name" required></div>
+              <div class="form-group"><label class="form-label">Téléphone</label><input class="form-control" id="d-phone" required placeholder="+216 25 111 222"></div>
+              <div class="form-group"><label class="form-label">Véhicule</label><input class="form-control" id="d-veh" required value="Utilitaire Kangoo"></div>
+              <div class="grid-2">
+                <div class="form-group"><label class="form-label">Lat</label><input class="form-control" id="d-lat" type="number" step="0.0001" value="36.8100" required></div>
+                <div class="form-group"><label class="form-label">Lng</label><input class="form-control" id="d-lng" type="number" step="0.0001" value="10.1900" required></div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;" type="submit">+ Ajouter livreur</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="section-view" id="tab-users">
+        <div class="card">
+          <h3 class="card-title" style="margin-bottom:1rem;">Gestion des utilisateurs & RBAC</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Actif</th><th>Action</th></tr></thead>
+              <tbody id="admin-users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Modal inspection Smart Decision -->
+<div class="modal-backdrop" id="decision-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3>Analyse Smart Decision</h3>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('decision-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="decision-modal-body"></div>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/charts.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

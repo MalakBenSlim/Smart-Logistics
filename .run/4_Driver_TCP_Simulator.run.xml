@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="4. Driver TCP Simulator (Optional CLI)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.smartlogistics.socket.simulator.DriverRouteSimulator" />
+    <module name="smart-logistics-socket" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

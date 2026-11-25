@@ -1,0 +1,26 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# IntelliJ IDEA (on conserve .run/ pour partager les configurations de lancement)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Base de donnees locale H2 & logs d'execution
+data/
+*.mv.db
+*.trace.db
+*.lock.db
+logs/
+*.log
+
+# OS & divers
+.DS_Store
+Thumbs.db

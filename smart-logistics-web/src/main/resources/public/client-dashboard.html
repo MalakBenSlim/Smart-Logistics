@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Client — Smart Logistics</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🚚</span>
+      <div>
+        <div>Smart Logistics</div>
+        <div class="sidebar-subtitle">Espace Client</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="overview">📊 Tableau de bord</button>
+      <button class="nav-item" data-tab="catalog">🛒 Catalogue & Commande</button>
+      <button class="nav-item" data-tab="orders">📦 Mes Commandes</button>
+      <button class="nav-item" data-tab="tracking">📍 Suivi Temps Réel</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="realtime-pill" id="sse-status">Connexion SSE...</div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="btn btn-outline btn-sm" id="menu-toggle">☰</button>
+        <div>
+          <strong id="page-title">Tableau de bord Client</strong>
+          <div style="font-size:.78rem;color:var(--text-muted);">Smart Logistics — Intelligent Delivery Platform</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="ClientApp.openCartTab()">🛒 Panier (<span id="cart-count">0</span>)</button>
+        <div class="notif-wrapper">
+          <button class="btn btn-outline btn-sm" id="notif-bell">🔔 <span id="notif-count" class="badge badge-red" style="display:none;">0</span></button>
+          <div class="notif-dropdown" id="notif-dropdown"><div id="notif-list"></div></div>
+        </div>
+        <div style="text-align:right;font-size:.82rem;">
+          <div id="user-name" style="font-weight:700;">—</div>
+          <div id="user-role" style="color:var(--text-muted);">CLIENT</div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="logout-btn">Déconnexion</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- OVERVIEW -->
+      <section class="section-view active" id="tab-overview">
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Commandes totales</div><div class="kpi-value" id="kpi-total">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">En cours</div><div class="kpi-value" id="kpi-active" style="color:var(--primary);">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Livrées</div><div class="kpi-value" id="kpi-delivered" style="color:var(--success);">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">Montant total</div><div class="kpi-value" id="kpi-amount">0 DT</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Dernière commande & Décision intelligente</h3>
+            <button class="btn btn-primary btn-sm" onclick="ClientApp.openCartTab()">+ Nouvelle commande</button>
+          </div>
+          <div id="latest-order-box">Chargement...</div>
+        </div>
+      </section>
+
+      <!-- CATALOG & CHECKOUT -->
+      <section class="section-view" id="tab-catalog">
+        <div class="grid-2" style="grid-template-columns:1.45fr 1fr;align-items:start;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Catalogue Produits</h3>
+              <div style="display:flex;gap:.5rem;">
+                <input class="form-control" id="search-prod" placeholder="Rechercher..." style="width:170px;">
+                <select class="form-control" id="cat-filter" style="width:140px;"><option value="">Toutes catégories</option></select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Produit</th><th>Catégorie</th><th>Prix</th><th>Dispo globale</th><th></th></tr></thead>
+                <tbody id="catalog-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Finaliser la commande</h3>
+            <div id="cart-items" style="margin-bottom:1rem;"></div>
+            <div id="cart-total-row" style="font-weight:700;margin-bottom:1rem;"></div>
+
+            <div class="form-group">
+              <label class="form-label">Destination rapide (Tunisie)</label>
+              <select class="form-control" id="dest-preset" onchange="ClientApp.applyDest()">
+                <option value="36.8435,10.2682,Lac 2, Les Berges du Lac, Tunis">Tunis — Lac 2 (36.8435, 10.2682)</option>
+                <option value="34.7250,10.7180,Route de l'Aéroport Km 4, Sfax">Sfax — Route Aéroport (34.7250, 10.7180)</option>
+                <option value="35.8600,10.5950,Hammam Sousse, Sousse">Sousse — Hammam Sousse (35.8600, 10.5950)</option>
+                <option value="33.8820,10.0950,Centre Ville, Gabès">Gabès — Centre Ville (33.8820, 10.0950)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Adresse de livraison</label>
+              <input class="form-control" id="ord-address" value="Lac 2, Les Berges du Lac, Tunis">
+            </div>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Latitude</label><input class="form-control" id="ord-lat" type="number" step="0.0001" value="36.8435"></div>
+              <div class="form-group"><label class="form-label">Longitude</label><input class="form-control" id="ord-lng" type="number" step="0.0001" value="10.2682"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mode de paiement (simulé)</label>
+              <select class="form-control" id="ord-payment" onchange="ClientApp.toggleCardInput()">
+                <option value="COD">Paiement à la livraison (COD)</option>
+                <option value="CARTE_SIMULEE">Carte bancaire simulée</option>
+              </select>
+            </div>
+            <div class="form-group" id="card-group" style="display:none;">
+              <label class="form-label">N° Carte simulée (finissant par 0000 = refus simulé)</label>
+              <input class="form-control" id="ord-card" value="4111 2222 3333 4444">
+            </div>
+
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+              <button class="btn btn-outline" style="flex:1;" type="button" onclick="ClientApp.previewSmart()">🤖 Simuler Smart Optimizer</button>
+              <button class="btn btn-primary" style="flex:1;" type="button" onclick="ClientApp.submitOrder()">✓ Valider la commande</button>
+            </div>
+            <div id="preview-decision-box"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ORDERS HISTORY -->
+      <section class="section-view" id="tab-orders">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Historique de mes commandes</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Dépôt</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Actions</th></tr></thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRACKING -->
+      <section class="section-view" id="tab-tracking">
+        <div class="grid-2" style="grid-template-columns:1.1fr 1fr;align-items:start;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Suivi de commande</h3>
+              <select class="form-control" id="track-select" style="width:220px;" onchange="ClientApp.selectTrackedOrder(this.value)"></select>
+            </div>
+            <div id="track-details">Sélectionnez une commande pour voir son avancement.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Carte temps réel (Tunisie)</h3>
+              <span class="badge badge-green" id="eta-badge">En direct</span>
+            </div>
+            <div class="map-box" id="client-map"></div>
+            <div id="driver-telemetry-info" style="margin-top:.85rem;font-size:.88rem;color:var(--text-muted);"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/client.js"></script>
+</body>
+</html>

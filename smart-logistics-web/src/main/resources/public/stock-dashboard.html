@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des Stocks & Dépôts — Smart Logistics</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🏭</span>
+      <div>
+        <div>Smart Logistics</div>
+        <div class="sidebar-subtitle">Gestionnaire Stock</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="warehouses">🏢 Dépôts & Capacités</button>
+      <button class="nav-item" data-tab="inventory">📦 Stocks & Transferts</button>
+      <button class="nav-item" data-tab="products">🏷️ Catalogue Produits</button>
+      <button class="nav-item" data-tab="alerts">⚠️ Ruptures & Alertes</button>
+      <button class="nav-item" data-tab="orders">🚚 Préparation Commandes</button>
+    </nav>
+    <div class="sidebar-footer"><div class="realtime-pill" id="sse-status">Connexion SSE...</div></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="btn btn-outline btn-sm" id="menu-toggle">☰</button>
+        <strong>Espace Gestionnaire de Stock</strong>
+      </div>
+      <div class="topbar-right">
+        <div class="notif-wrapper">
+          <button class="btn btn-outline btn-sm" id="notif-bell">🔔 <span id="notif-count" class="badge badge-red" style="display:none;">0</span></button>
+          <div class="notif-dropdown" id="notif-dropdown"><div id="notif-list"></div></div>
+        </div>
+        <div style="text-align:right;font-size:.82rem;">
+          <div id="user-name" style="font-weight:700;">—</div>
+          <div id="user-role" style="color:var(--text-muted);">GESTIONNAIRE_STOCK</div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="logout-btn">Déconnexion</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="section-view active" id="tab-warehouses">
+        <div class="kpi-grid" id="wh-cards"></div>
+      </section>
+
+      <section class="section-view" id="tab-inventory">
+        <div class="grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Stock par dépôt</h3>
+              <select class="form-control" id="wh-filter" style="width:190px;" onchange="StockApp.loadInventory()"></select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Dépôt</th><th>Produit</th><th>Dispo</th><th>Réservé</th><th>Seuil</th><th>Modifier</th></tr></thead>
+                <tbody id="inv-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Transférer du stock (Atomique)</h3>
+            <form id="transfer-form">
+              <div class="form-group"><label class="form-label">Dépôt source</label><select class="form-control" id="tr-from"></select></div>
+              <div class="form-group"><label class="form-label">Dépôt destination</label><select class="form-control" id="tr-to"></select></div>
+              <div class="form-group"><label class="form-label">Produit</label><select class="form-control" id="tr-prod"></select></div>
+              <div class="form-group"><label class="form-label">Quantité</label><input class="form-control" id="tr-qty" type="number" min="1" value="5"></div>
+              <button class="btn btn-primary" style="width:100%;" type="submit">Exécuter le transfert</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-view" id="tab-products">
+        <div class="grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start;">
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Produits actifs</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>SKU</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Seuil</th><th></th></tr></thead>
+                <tbody id="prod-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom:1rem;">Ajouter un produit</h3>
+            <form id="prod-form">
+              <div class="form-group"><label class="form-label">SKU</label><input class="form-control" id="p-sku" required placeholder="PRD-021"></div>
+              <div class="form-group"><label class="form-label">Nom</label><input class="form-control" id="p-name" required></div>
+              <div class="form-group"><label class="form-label">Catégorie</label><input class="form-control" id="p-cat" required value="Informatique"></div>
+              <div class="grid-2">
+                <div class="form-group"><label class="form-label">Prix (DT)</label><input class="form-control" id="p-price" type="number" step="0.1" required></div>
+                <div class="form-group"><label class="form-label">Seuil alerte</label><input class="form-control" id="p-thresh" type="number" value="5" required></div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;" type="submit">+ Enregistrer</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-view" id="tab-alerts">
+        <div class="grid-2">
+          <div class="card">
+            <h3 class="card-title" style="color:var(--danger);margin-bottom:1rem;">Produits en rupture (0)</h3>
+            <div id="out-stock-list"></div>
+          </div>
+          <div class="card">
+            <h3 class="card-title" style="color:var(--warning);margin-bottom:1rem;">Stock critique (≤ seuil)</h3>
+            <div id="low-stock-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-view" id="tab-orders">
+        <div class="card">
+          <h3 class="card-title" style="margin-bottom:1rem;">File des commandes entrepôts</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Client</th><th>Dépôt</th><th>Statut</th><th>Livreur</th><th>Action</th></tr></thead>
+              <tbody id="stock-orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/stock.js"></script>
+</body>
+</html>
